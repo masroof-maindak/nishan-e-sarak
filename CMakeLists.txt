@@ -15,13 +15,22 @@ elseif(LLD_BIN)
 endif()
 
 include(FetchContent)
+
 FetchContent_Declare(
     argparse
     GIT_REPOSITORY https://github.com/p-ranav/argparse.git
 )
-FetchContent_MakeAvailable(argparse)
+
+FetchContent_Declare(
+    KinaraDaryaft
+    GIT_REPOSITORY https://github.com/masroof-maindak/kinara-daryaft.git
+    GIT_TAG origin/main
+)
+
+FetchContent_MakeAvailable(argparse KinaraDaryaft)
 
 find_package(OpenCV REQUIRED)
-add_executable(nshn "src/main.cpp" "src/args.cpp" "src/io.cpp")
+
+add_executable(nshn "src/main.cpp" "src/args.cpp")
 target_include_directories(nshn PRIVATE "include/" ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(nshn PRIVATE argparse ${OpenCV_LIBS})
+target_link_libraries(nshn PRIVATE argparse KinaraDaryaft ${OpenCV_LIBS})
