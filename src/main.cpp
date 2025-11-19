@@ -12,6 +12,27 @@
 constexpr float sigma{1.4f};
 constexpr float T{0.3f};
 
+cv::Mat draw_lines_onto_image(const cv::Mat &img, std::vector<PolarCoord> lines) {
+    cv::Mat ret{img.clone()};
+
+    for (PolarCoord line : lines) {
+        auto [rho, theta]{line};
+        cv::Point p1, p2;
+
+        double a = cos(theta), b = sin(theta);
+        double x0 = a * rho, y0 = b * rho;
+
+        p1.x = cvRound(x0 + 1000 * (-b));
+        p1.y = cvRound(y0 + 1000 * (a));
+        p2.x = cvRound(x0 - 1000 * (-b));
+        p2.y = cvRound(y0 - 1000 * (a));
+
+        cv::line(ret, p1, p2, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
+    }
+
+    return ret;
+}
+
 int main(int argc, char *argv[]) {
     // --- Config ---
     const auto args_expected = parse_args(argc, argv);
@@ -57,9 +78,9 @@ int main(int argc, char *argv[]) {
         auto *dst_row       = hsv_filtered.ptr<cv::Vec3b>(y);
         for (int x = 0; x < cols; x++) {
             auto px = src_row[x];
-            if ((px[0] > 53 && px[1] > 100 && px[2] > 100) || // yellow lower
-                (px[0] < 63 && px[1] < 255 && px[2] < 255) || // yellow upper
-                (px[0] < 63 && px[1] < 30 && px[2] > 230))    // white upper
+            if ((px[0] > 40 && px[1] > 100 && px[2] > 100) || // yellow lower
+                (px[0] < 60 && px[1] < 255 && px[2] < 255) || // yellow upper
+                (px[1] < 23 && px[2] > 230))                  // white upper
                 dst_row[x] = px;
         }
     }
@@ -72,38 +93,55 @@ int main(int argc, char *argv[]) {
         std::println(stderr, "Failed to run canny: {}", thresh_mag_expected.error());
         return EXIT_FAILURE;
     }
-    auto thresh_mag{thresh_mag_expected.value()};
+    auto edge_mat{thresh_mag_expected.value()};
 
     // Keep only the edges that correspond to white or yellow in the filtered HSV image.
     // All others can safely be made zero.
 
-    auto edge_detections_save_detected{save_image(thresh_mag, args.out_dir, img_name, "edges")};
+    auto edge_detections_save_detected{save_image(edge_mat, args.out_dir, img_name, "edges")};
+    cv::Mat edge_mat_filtered{edge_mat.clone()};
 
     for (int y = 0; y < rows; y++) {
         const auto *hsv_filtered_row = hsv_filtered.ptr<cv::Vec3b>(y);
-        auto *mask_row               = thresh_mag.ptr<std::uint8_t>(y);
+        auto *mask_row               = edge_mat_filtered.ptr<std::uint8_t>(y);
         for (int x = 0; x < cols; x++) {
             const auto px = hsv_filtered_row[x];
             bool black_px{px[0] == 0 && px[1] == 0 && px[2] == 0};
-            if (black_px)
+            if (!black_px)
                 mask_row[x] = 0;
         }
     }
 
-    auto filt_edges_img_save_expected{save_image(thresh_mag, args.out_dir, img_name, "edges-filtered")};
+    auto filt_edges_img_save_expected{save_image(edge_mat_filtered, args.out_dir, img_name, "edges-filtered")};
 
     // --- Region of Interest
     // CHECK: what do I even do in here???
 
     // --- Hough Transform ---
-    const auto lines_expected{hough_transform(thresh_mag, 1, 125)};
+    // FIXME: broken beyond belief
+    const auto lines_expected{hough_transform(edge_mat, 2, 100)};
     if (!lines_expected.has_value()) {
         std::println(stderr, "Failed to run hough transform: {}", lines_expected.error());
         return EXIT_FAILURE;
     }
     auto lines{lines_expected.value()};
 
-    // --- TODO: Filter out lines w/ mostly horizontal slopes
+    const cv::Mat img_annotated{draw_lines_onto_image(img, lines)};
+
+    auto lines_img_save_expected{save_image(img_annotated, args.out_dir, img_name, "lines")};
+
+    // --- Filter out lines w/ mostly horizontal slopes ---
+    for (auto it = lines.begin(); it != lines.end();) {
+        auto [rho, theta]{*it};
+
+        // TODO: detect horizontal lines
+        bool line_is_horiz{};
+
+        if (line_is_horiz)
+            it = lines.erase(it);
+        else
+            it++;
+    }
 
     // --- TODO: Linear Regression ---
 
