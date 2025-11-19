@@ -19,15 +19,16 @@ cv::Mat draw_lines_onto_image(const cv::Mat &img, std::vector<PolarCoord> lines)
         auto [rho, theta]{line};
         cv::Point p1, p2;
 
-        double a = cos(theta), b = sin(theta);
-        double x0 = a * rho, y0 = b * rho;
+        const double theta_rad = theta * CV_PI / 180.0;
+        const double a = std::cos(theta_rad), b = std::sin(theta_rad);
+        const double x0 = a * rho, y0 = b * rho;
 
-        p1.x = cvRound(x0 + 1000 * (-b));
-        p1.y = cvRound(y0 + 1000 * (a));
-        p2.x = cvRound(x0 - 1000 * (-b));
-        p2.y = cvRound(y0 - 1000 * (a));
+        p1.x = cvRound(x0 + 500 * (-b));
+        p1.y = cvRound(y0 + 500 * (a));
+        p2.x = cvRound(x0 - 500 * (-b));
+        p2.y = cvRound(y0 - 500 * (a));
 
-        cv::line(ret, p1, p2, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
+        cv::line(ret, p1, p2, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);
     }
 
     return ret;
@@ -95,10 +96,12 @@ int main(int argc, char *argv[]) {
     }
     auto edge_mat{thresh_mag_expected.value()};
 
-    // Keep only the edges that correspond to white or yellow in the filtered HSV image.
-    // All others can safely be made zero.
-
     auto edge_detections_save_detected{save_image(edge_mat, args.out_dir, img_name, "edges")};
+
+    /*
+     * NOTE: this sometimes wipes out very _blatant_ lane, I suspect because the edge boundary is just outside that of
+     * the lane itself. Perhaps we should look at neighbours while performing this step?
+     */
     cv::Mat edge_mat_filtered{edge_mat.clone()};
 
     for (int y = 0; y < rows; y++) {
@@ -107,7 +110,9 @@ int main(int argc, char *argv[]) {
         for (int x = 0; x < cols; x++) {
             const auto px = hsv_filtered_row[x];
             bool black_px{px[0] == 0 && px[1] == 0 && px[2] == 0};
-            if (!black_px)
+            // if this pixel is black in the HSV image, it means that it's not a part of a lane marker (as those would
+            // be yellow or white)
+            if (black_px)
                 mask_row[x] = 0;
         }
     }
@@ -118,8 +123,7 @@ int main(int argc, char *argv[]) {
     // CHECK: what do I even do in here???
 
     // --- Hough Transform ---
-    // FIXME: broken beyond belief
-    const auto lines_expected{hough_transform(edge_mat, 2, 100)};
+    const auto lines_expected{hough_transform(edge_mat_filtered, 1, 125)};
     if (!lines_expected.has_value()) {
         std::println(stderr, "Failed to run hough transform: {}", lines_expected.error());
         return EXIT_FAILURE;

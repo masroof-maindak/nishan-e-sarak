@@ -27,7 +27,8 @@ std::expected<std::vector<PolarCoord>, std::string> hough_transform(const cv::Ma
             if (mask_row[x] != 0) { // edge exists
                 for (int theta = 0; theta < votes_cols; theta += 1) {
                     // TODO: pre-compute trigonometric values
-                    const int rho{static_cast<int>(x * std::cos(theta - 90) + y * std::sin(theta - 90)) + max_dist};
+                    const double theta_rad = theta * CV_PI / 180.0;
+                    const int rho{static_cast<int>(x * std::cos(theta_rad) + y * std::sin(theta_rad)) + max_dist};
                     ++votes[rho][theta];
                 }
             }
@@ -38,7 +39,7 @@ std::expected<std::vector<PolarCoord>, std::string> hough_transform(const cv::Ma
     for (int y = 0; y < votes_rows; y++)
         for (int x = 0; x < votes_cols; x++)
             if (votes[y][x] > threshold)
-                lines.emplace_back(std::make_pair(x - max_dist, y - 90));
+                lines.emplace_back(y - max_dist, x);
 
     return lines;
 }
