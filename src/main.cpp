@@ -85,6 +85,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // --- Region of Interest
+    // CHECK: what do I even do in here???
+
+    // --- TODO: Hough Transform ---
+
+    // --- TODO: Filter out lines w/ mostly horizontal slopes
+
+    // --- TODO: Linear Regression ---
 
     return EXIT_SUCCESS;
 }
