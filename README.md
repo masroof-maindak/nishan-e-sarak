@@ -32,3 +32,4 @@ sudo pacman -S opencv qt6-base vtk hdf5
 ## Acknowledgements
 
 - [ArgParse](https://github.com/p-ranav/argparse)
+- [Understanding Hough Transform - Alyssa Quek](https://alyssaq.github.io/2014/understanding-hough-transform/)

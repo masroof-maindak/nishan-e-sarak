@@ -1,4 +1,5 @@
 #include <nshn/args.h>
+#include <nshn/hough.h>
 #include <nshn/io.h>
 
 #include <knr/canny.h>
@@ -94,7 +95,13 @@ int main(int argc, char *argv[]) {
     // --- Region of Interest
     // CHECK: what do I even do in here???
 
-    // --- TODO: Hough Transform ---
+    // --- Hough Transform ---
+    const auto lines_expected{hough_transform(thresh_mag, 1, 125)};
+    if (!lines_expected.has_value()) {
+        std::println(stderr, "Failed to run hough transform: {}", lines_expected.error());
+        return EXIT_FAILURE;
+    }
+    auto lines{lines_expected.value()};
 
     // --- TODO: Filter out lines w/ mostly horizontal slopes
 

@@ -31,6 +31,6 @@ FetchContent_MakeAvailable(argparse KinaraDaryaft)
 
 find_package(OpenCV REQUIRED)
 
-add_executable(nshn "src/main.cpp" "src/args.cpp" "src/io.cpp")
+add_executable(nshn "src/main.cpp" "src/args.cpp" "src/io.cpp" "src/hough.cpp")
 target_include_directories(nshn PRIVATE "include/" ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(nshn PRIVATE argparse KinaraDaryaft ${OpenCV_LIBS})
