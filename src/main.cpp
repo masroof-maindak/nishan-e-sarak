@@ -76,6 +76,8 @@ int main(int argc, char *argv[]) {
     // Keep only the edges that correspond to white or yellow in the filtered HSV image.
     // All others can safely be made zero.
 
+    auto edge_detections_save_detected{save_image(thresh_mag, args.out_dir, img_name, "edges")};
+
     for (int y = 0; y < rows; y++) {
         const auto *hsv_filtered_row = hsv_filtered.ptr<cv::Vec3b>(y);
         auto *mask_row               = thresh_mag.ptr<std::uint8_t>(y);
@@ -86,6 +88,8 @@ int main(int argc, char *argv[]) {
                 mask_row[x] = 0;
         }
     }
+
+    auto filt_edges_img_save_expected{save_image(thresh_mag, args.out_dir, img_name, "edges-filtered")};
 
     // --- Region of Interest
     // CHECK: what do I even do in here???
