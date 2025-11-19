@@ -120,9 +120,10 @@ int main(int argc, char *argv[]) {
     auto filt_edges_img_save_expected{save_image(edge_mat_filtered, args.out_dir, img_name, "edges-filtered")};
 
     // --- Region of Interest
-    // CHECK: what do I even do in here???
+    // TODO: strip down edge_mat_filtered till only those edges contained within a trapezoid at the bottom remain
 
     // --- Hough Transform ---
+    // TODO: get theta_coalesce and threshold via CLI args
     const auto lines_expected{hough_transform(edge_mat_filtered, 1, 125)};
     if (!lines_expected.has_value()) {
         std::println(stderr, "Failed to run hough transform: {}", lines_expected.error());
