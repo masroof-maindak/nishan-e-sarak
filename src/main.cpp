@@ -1,6 +1,7 @@
 #include <nshn/args.h>
 #include <nshn/io.h>
 
+#include <knr/canny.h>
 #include <knr/gauss.h>
 #include <opencv2/opencv.hpp>
 
@@ -30,8 +31,8 @@ int main(int argc, char *argv[]) {
     const cv::Mat img{img_expected.value()};
 
     // --- Remove noise via gaussian ---
-    const int filt_size{compute_filter_size(sigma, T)};
-    const auto gauss_filt_expected{generate_gaussian_filter(filt_size, sigma)};
+    const int filt_size{kd::compute_filter_size(sigma, T)};
+    const auto gauss_filt_expected{kd::generate_gaussian_filter(filt_size, sigma)};
     if (!gauss_filt_expected.has_value()) {
         std::println(stderr, "Failed to generate Gaussian filter: {}", gauss_filt_expected.error());
         return EXIT_FAILURE;
@@ -63,13 +64,27 @@ int main(int argc, char *argv[]) {
     }
 
     // --- Canny ---
-    auto thresh_mag_expected{canny_edge_detector(img_name, img, {sigma, T, 50, 90, out_dir}, false)};
+    auto thresh_mag_expected{kd::canny_edge_detector(img_name, img, {sigma, T, 50, 90, args.out_dir}, false)};
     if (!thresh_mag_expected.has_value()) {
         std::println(stderr, "Failed to run canny: {}", thresh_mag_expected.error());
         return EXIT_FAILURE;
     }
-    const auto thresh_mag{thresh_mag_expected.value()};
-    // TODO: in thresh mag (edge map), keep only the edges that correspond to 'something' within the filtered hsv image
+    auto thresh_mag{thresh_mag_expected.value()};
+
+    // Keep only the edges that correspond to white or yellow in the filtered HSV image.
+    // All others can safely be made zero.
+
+    for (int y = 0; y < rows; y++) {
+        const auto *hsv_filtered_row = hsv_filtered.ptr<cv::Vec3b>(y);
+        auto *mask_row               = thresh_mag.ptr<std::uint8_t>(y);
+        for (int x = 0; x < rows; x++) {
+            const auto px = hsv_filtered_row[x];
+            bool black_px{px[0] == 0 && px[1] == 0 && px[2] == 0};
+            if (black_px)
+                mask_row[x] = 0;
+        }
+    }
+
 
     return EXIT_SUCCESS;
 }
