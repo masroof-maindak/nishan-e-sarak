@@ -64,7 +64,9 @@ int main(int argc, char *argv[]) {
     }
 
     // --- Canny ---
-    auto thresh_mag_expected{kd::canny_edge_detector(img_name, img, {sigma, T, 50, 90, args.out_dir}, false)};
+    cv::Mat img_gray{};
+    cv::cvtColor(img, img_gray, cv::COLOR_BGR2GRAY);
+    auto thresh_mag_expected{kd::canny_edge_detector(img_name, img_gray, {sigma, T, 50, 90, args.out_dir}, false)};
     if (!thresh_mag_expected.has_value()) {
         std::println(stderr, "Failed to run canny: {}", thresh_mag_expected.error());
         return EXIT_FAILURE;
