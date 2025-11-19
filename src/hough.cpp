@@ -35,7 +35,7 @@ std::expected<std::vector<PolarCoord>, std::string> hough_transform(const cv::Ma
     }
 
     // Threshold
-    for (int y = 0; y < votes_cols; y++)
+    for (int y = 0; y < votes_rows; y++)
         for (int x = 0; x < votes_cols; x++)
             if (votes[y][x] > threshold)
                 lines.emplace_back(std::make_pair(x - max_dist, y - 90));

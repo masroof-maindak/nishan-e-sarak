@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     for (int y = 0; y < rows; y++) {
         const auto *src_row = hsv_smoothed.ptr<cv::Vec3b>(y);
         auto *dst_row       = hsv_filtered.ptr<cv::Vec3b>(y);
-        for (int x = 0; x < rows; x++) {
+        for (int x = 0; x < cols; x++) {
             auto px = src_row[x];
             if ((px[0] > 53 && px[1] > 100 && px[2] > 100) || // yellow lower
                 (px[0] < 63 && px[1] < 255 && px[2] < 255) || // yellow upper
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     for (int y = 0; y < rows; y++) {
         const auto *hsv_filtered_row = hsv_filtered.ptr<cv::Vec3b>(y);
         auto *mask_row               = thresh_mag.ptr<std::uint8_t>(y);
-        for (int x = 0; x < rows; x++) {
+        for (int x = 0; x < cols; x++) {
             const auto px = hsv_filtered_row[x];
             bool black_px{px[0] == 0 && px[1] == 0 && px[2] == 0};
             if (black_px)
