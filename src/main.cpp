@@ -19,14 +19,14 @@ cv::Mat draw_lines_onto_image(const cv::Mat &img, std::vector<PolarCoord> lines)
         auto [rho, theta]{line};
         cv::Point p1, p2;
 
-        const double theta_rad = theta * CV_PI / 180.0;
-        const double a = std::cos(theta_rad), b = std::sin(theta_rad);
-        const double x0 = a * rho, y0 = b * rho;
+        const double theta_rad{theta * CV_PI / 180.0};
+        const double a{std::cos(theta_rad)}, b{std::sin(theta_rad)};
+        const double x0{a * rho}, y0{b * rho};
 
-        p1.x = cvRound(x0 + 500 * (-b));
-        p1.y = cvRound(y0 + 500 * (a));
-        p2.x = cvRound(x0 - 500 * (-b));
-        p2.y = cvRound(y0 - 500 * (a));
+        p1.x = cvRound(x0 + 600 * (-b));
+        p1.y = cvRound(y0 + 600 * (a));
+        p2.x = cvRound(x0 - 600 * (-b));
+        p2.y = cvRound(y0 - 600 * (a));
 
         cv::line(ret, p1, p2, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);
     }
@@ -99,19 +99,19 @@ int main(int argc, char *argv[]) {
     auto edge_detections_save_detected{save_image(edge_mat, args.out_dir, img_name, "edges")};
 
     /*
-     * NOTE: this sometimes wipes out very _blatant_ lane, I suspect because the edge boundary is just outside that of
+     * CHECK: this sometimes wipes out very _blatant_ lanes, I suspect because the edge boundary is just outside that of
      * the lane itself. Perhaps we should look at neighbours while performing this step?
      */
     cv::Mat edge_mat_filtered{edge_mat.clone()};
 
+    // if this pixel is black in the filtered HSV image, it means that it's not a part of a lane marker (as those would
+    // be yellow or white)
     for (int y = 0; y < rows; y++) {
         const auto *hsv_filtered_row = hsv_filtered.ptr<cv::Vec3b>(y);
         auto *mask_row               = edge_mat_filtered.ptr<std::uint8_t>(y);
         for (int x = 0; x < cols; x++) {
             const auto px = hsv_filtered_row[x];
             bool black_px{px[0] == 0 && px[1] == 0 && px[2] == 0};
-            // if this pixel is black in the HSV image, it means that it's not a part of a lane marker (as those would
-            // be yellow or white)
             if (black_px)
                 mask_row[x] = 0;
         }
