@@ -6,6 +6,7 @@
 #include <knr/gauss.h>
 #include <opencv2/opencv.hpp>
 
+#include <cstring>
 #include <print>
 #include <stdlib.h>
 
@@ -23,10 +24,10 @@ cv::Mat draw_lines_onto_image(const cv::Mat &img, std::vector<PolarCoord> lines)
         const double a{std::cos(theta_rad)}, b{std::sin(theta_rad)};
         const double x0{a * rho}, y0{b * rho};
 
-        p1.x = cvRound(x0 + 600 * (-b));
-        p1.y = cvRound(y0 + 600 * (a));
-        p2.x = cvRound(x0 - 600 * (-b));
-        p2.y = cvRound(y0 - 600 * (a));
+        p1.x = cvRound(x0 + 1000 * (-b));
+        p1.y = cvRound(y0 + 1000 * (a));
+        p2.x = cvRound(x0 - 1000 * (-b));
+        p2.y = cvRound(y0 - 1000 * (a));
 
         cv::line(ret, p1, p2, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);
     }
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]) {
     }
     auto edge_mat{thresh_mag_expected.value()};
 
-    auto edge_detections_save_detected{save_image(edge_mat, args.out_dir, img_name, "edges")};
+    auto edge_detections_save_detected{save_image(edge_mat, args.out_dir, img_name, "01-edges")};
 
     /*
      * CHECK: this sometimes wipes out very _blatant_ lanes, I suspect because the edge boundary is just outside that of
@@ -117,14 +118,21 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    auto filt_edges_img_save_expected{save_image(edge_mat_filtered, args.out_dir, img_name, "edges-filtered")};
+    auto filt_edges_img_save_expected{save_image(edge_mat_filtered, args.out_dir, img_name, "02-edges-filtered")};
 
     // --- Region of Interest
-    // TODO: strip down edge_mat_filtered till only those edges contained within a trapezoid at the bottom remain
+    // Only keep edges that are in the lower 60% of the screen
+    cv::Mat roi_mask{img.size(), CV_8UC1, cv::Scalar(255)};
+    std::memset(roi_mask.data, 0, static_cast<size_t>(img.total() * 0.4));
+
+    cv::Mat edge_mat_roi{};
+    cv::bitwise_and(roi_mask, edge_mat_filtered, edge_mat_roi);
+
+    auto edge_mat_roi_save_expected{save_image(edge_mat_roi, args.out_dir, img_name, "03-roi-mask")};
 
     // --- Hough Transform ---
     // TODO: get theta_coalesce and threshold via CLI args
-    const auto lines_expected{hough_transform(edge_mat_filtered, 1, 125)};
+    const auto lines_expected{hough_transform(edge_mat_roi, 1, 125)};
     if (!lines_expected.has_value()) {
         std::println(stderr, "Failed to run hough transform: {}", lines_expected.error());
         return EXIT_FAILURE;
@@ -133,7 +141,7 @@ int main(int argc, char *argv[]) {
 
     const cv::Mat img_annotated{draw_lines_onto_image(img, lines)};
 
-    auto lines_img_save_expected{save_image(img_annotated, args.out_dir, img_name, "lines")};
+    auto lines_img_save_expected{save_image(img_annotated, args.out_dir, img_name, "04-lines")};
 
     // --- Filter out lines w/ mostly horizontal slopes ---
     for (auto it = lines.begin(); it != lines.end();) {
