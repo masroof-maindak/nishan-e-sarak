@@ -131,8 +131,7 @@ int main(int argc, char *argv[]) {
     auto edge_mat_roi_save_expected{save_image(edge_mat_roi, args.out_dir, img_name, "03-roi-mask")};
 
     // --- Hough Transform ---
-    // TODO: get theta_coalesce and threshold via CLI args
-    const auto lines_expected{hough_transform(edge_mat_roi, 1, 125)};
+    const auto lines_expected{hough_transform(edge_mat_roi, args.theta_coalesce, args.threshold)};
     if (!lines_expected.has_value()) {
         std::println(stderr, "Failed to run hough transform: {}", lines_expected.error());
         return EXIT_FAILURE;
@@ -155,8 +154,6 @@ int main(int argc, char *argv[]) {
         else
             it++;
     }
-
-    // --- TODO: Linear Regression ---
 
     return EXIT_SUCCESS;
 }

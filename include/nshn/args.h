@@ -7,6 +7,8 @@
 #include <string>
 
 struct ArgConfig {
+    int theta_coalesce;
+    int threshold;
     std::string img_path;
     std::string out_dir;
 };
