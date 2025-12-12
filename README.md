@@ -5,6 +5,11 @@
 >
 > _To spite them_
 
+![output](.github/assets/out.jpg)
+
+Motorcyclists, the certain kind of person is motorcyclists. Yes, I am acutely
+aware this program doesn't run all that well at the moment.
+
 ## Usage
 
 ```bash
